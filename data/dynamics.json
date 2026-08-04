@@ -1,0 +1,46 @@
+{
+  "updatedAt": "2026-08-04T22:30:00+08:00",
+  "version": "2026.08.04",
+  "items": [
+    {
+      "date": "2026-08-02",
+      "title": "《九斤姑娘》宁波站演出完成",
+      "desc": "青春越剧《九斤姑娘》于宁波天然舞台演出，李云霄领衔饰演九斤姑娘。",
+      "source": "中国宁波网",
+      "url": "https://news.cnnb.com.cn/system/2026/08/01/030799687.shtml",
+      "tag": "演出"
+    },
+    {
+      "date": "2026-07-19",
+      "title": "青春越剧《九斤姑娘》杭州首演",
+      "desc": "该剧在杭州首演，以青春化表达重新呈现越剧早期经典。",
+      "source": "中国新闻网",
+      "url": "https://www.chinanews.com.cn/cul/2026/07-19/10662317.shtml",
+      "tag": "首演"
+    },
+    {
+      "date": "2026-07-19",
+      "title": "《九斤姑娘》首演获主流媒体关注",
+      "desc": "新华网浙江频道报道李云霄饰演九斤姑娘及该剧的传承创新。",
+      "source": "新华网浙江",
+      "url": "https://www.zj.xinhuanet.com/20260719/c881effb38144ad1bd10adba36aaa91a/c.html",
+      "tag": "报道"
+    },
+    {
+      "date": "2026-01-18",
+      "title": "获评一级演员",
+      "desc": "公开报道显示，李云霄获一级演员任职资格。",
+      "source": "新华网",
+      "url": "https://app.xinhuanet.com/news/article.html?articleId=ac5c447346b445835e45c0e6a409c4d0",
+      "tag": "荣誉"
+    },
+    {
+      "date": "2024-11-14",
+      "title": "人物采访：戏剧演员要有敏感力",
+      "desc": "采访分享她与传统戏剧艺术的缘分及表演思考。",
+      "source": "腾讯新闻",
+      "url": "https://news.qq.com/rain/a/20241114A02EDA00",
+      "tag": "采访"
+    }
+  ]
+}
