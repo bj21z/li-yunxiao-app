@@ -1,26 +1,270 @@
-const works=[['新龙门客栈','金镶玉 · 新国风环境式越剧'],['钱塘里','现实题材越剧 · 白玉兰新人主角奖'],['陈三两','吕派经典 · 水袖与人物张力'],['梁山伯与祝英台','经典传承 · 青春演绎']];
-const interests=[['◌','吕派艺术','重视唱腔、人物气质与传统程式的当代表达。'],['水','水袖身段','以细腻身段承载人物情绪与舞台节奏。'],['剧','人物创造','公开采访中多次谈及从现代观众感受出发塑造角色。'],['花','传统新生','关注越剧守正创新，让更多年轻观众走进剧场。']];
-const fallback=[
-{date:'2026-07-20',title:'谈《九斤姑娘》的传承与突破',desc:'潮新闻采访：如何在经典人物中注入今天的生命感。',url:'https://tidenews.com.cn/video_detail.html?id=3506687'},
-{date:'2026-06-24',title:'青春越剧《九斤姑娘》发布',desc:'浙江小百花越剧院重磅打造青春版经典。',url:'https://www.sina.cn/news/detail/5313364249018606.html'},
-{date:'2026-01-18',title:'获评一级演员',desc:'公开报道显示，李云霄获一级演员任职资格。',url:'https://news.sina.cn/2026-01-18/detail-inhhthyx7728027.d.html'},
-{date:'2024-11-14',title:'谈艺录：戏剧演员要有敏感力',desc:'采访分享她与传统戏剧艺术的缘分及表演思考。',url:'https://news.qq.com/rain/a/20241114A02EDA00'}];
-const $=s=>document.querySelector(s); const $$=s=>[...document.querySelectorAll(s)];
-$('#works').innerHTML=works.map(w=>`<article class="work"><div class="art"></div><div class="work-copy"><h3>${w[0]}</h3><p>${w[1]}</p></div></article>`).join('');
-$('#interests').innerHTML=interests.map(x=>`<article class="interest"><span>${x[0]}</span><h3>${x[1]}</h3><p>${x[2]}</p></article>`).join('');
-function renderFeed(items,live=false){$('#feed').innerHTML=items.map(x=>`<article class="feed-item"><time>${x.date}</time><h3>${x.title}</h3><p>${x.desc}</p><a target="_blank" rel="noopener" href="${x.url}">阅读来源 →</a></article>`).join('');$('#feedStatus').textContent=live?'已连接公开新闻检索源':'当前显示已核验的内置动态；点击更新尝试联网检索。'}
-async function refresh(){ $('#refreshBtn').disabled=true;$('#feedStatus').textContent='正在检索公开动态…';try{const q=encodeURIComponent('李云霄 越剧 when:30d');const u=`https://r.jina.ai/http://news.google.com/rss/search?q=${q}&hl=zh-CN&gl=CN&ceid=CN:zh-Hans`;const t=await fetch(u,{signal:AbortSignal.timeout(7000)}).then(r=>r.text());const rows=[...t.matchAll(/<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>[\s\S]*?<pubDate>(.*?)<\/pubDate>[\s\S]*?<\/item>/g)].slice(0,6).map(m=>({title:m[1].replace(/<!\[CDATA\[|\]\]>/g,''),url:m[2],date:new Date(m[3]).toLocaleDateString('zh-CN'),desc:'来自公开新闻聚合源，内容请以原始报道为准。'}));if(rows.length)renderFeed(rows,true);else throw 0}catch(e){renderFeed(fallback);$('#feedStatus').textContent='联网检索暂不可用，已回退到内置核验动态。'}finally{$('#refreshBtn').disabled=false}}
-renderFeed(fallback);$('#refreshBtn').onclick=refresh;
-$$('[data-go]').forEach(b=>b.onclick=()=>{const k=b.dataset.go;const target=k==='top'?document.body:k==='works'?$('#works'):k==='fan'?$('.fan-card'):$('#'+k);target.scrollIntoView({behavior:'smooth'});});
-$('#themeBtn').onclick=()=>document.body.classList.toggle('dark');
-$('#favBtn').onclick=()=>{const on=localStorage.getItem('fav')!=='1';localStorage.setItem('fav',on?'1':'0');$('#favBtn').textContent=on?'♥ 已收藏':'♡ 收藏'};if(localStorage.getItem('fav')==='1')$('#favBtn').textContent='♥ 已收藏';
-const fortunes=['水袖起落，心有清风。','慢工守艺，自有回响。','今日宜听一段越韵。','台上一分钟，台下万千功。','花开有时，热爱长青。'];$('#fortuneBtn').onclick=()=>$('#fortune').textContent=fortunes[Math.floor(Math.random()*fortunes.length)];
-let c=+(localStorage.getItem('check')||0);$('#checkCount').textContent=c+' 次';
-const modal=$('#modal'),body=$('#modalBody');
-function closeModal(){modal.hidden=true;document.documentElement.classList.remove('modal-open');document.body.classList.remove('modal-open')}
-function openModal(){modal.hidden=false;document.documentElement.classList.add('modal-open');document.body.classList.add('modal-open')}
-$('#closeModal').addEventListener('click',closeModal);
-$('#closeModal').addEventListener('touchend',e=>{e.preventDefault();closeModal()},{passive:false});
-modal.onclick=e=>{if(e.target===modal)closeModal()};
-$$('[data-modal]').forEach(b=>b.onclick=()=>{const type=b.dataset.modal;if(type==='checkin'){c++;localStorage.setItem('check',c);$('#checkCount').textContent=c+' 次';body.innerHTML=`<h2>签到成功</h2><p>这是你在本机的第 <b>${c}</b> 次越韵签到。</p>`}if(type==='note'){body.innerHTML=`<h2>写一封云笺</h2><textarea id="noteArea" placeholder="写下你对舞台、角色或越剧的感受…">${localStorage.getItem('note')||''}</textarea><button class="action" id="saveNote">保存到本机</button>`;setTimeout(()=>$('#saveNote').onclick=()=>{localStorage.setItem('note',$('#noteArea').value);closeModal()},0)}if(type==='quiz'){body.innerHTML=`<h2>云霄小考</h2><p>李云霄主要工哪个行当？</p><button class="action" onclick="this.textContent='回答正确：花旦 ✓'">花旦</button><button class="action" style="background:#8e7d83" onclick="this.textContent='再想一想'">老生</button>`}if(type==='share'){body.innerHTML=`<h2>分享卡</h2><div style="padding:30px;border-radius:24px;background:linear-gradient(135deg,#70283b,#27131b);color:white;text-align:center"><small>云上小百花</small><h1 style="font-family:serif;font-size:48px">李云霄</h1><p>越韵新声 · 让传统被今天听见</p></div><p>可使用 iPhone 截图保存分享。正式版可接入 Canvas 导出图片。</p>`}openModal()});
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+'use strict';
+
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+const works = [
+  ['新龙门客栈', '金镶玉 · 新国风环境式越剧'],
+  ['钱塘里', '现实题材越剧 · 白玉兰新人主角奖'],
+  ['陈三两', '吕派经典 · 水袖与人物张力'],
+  ['梁山伯与祝英台', '经典传承 · 青春演绎']
+];
+
+const interests = [
+  ['◌', '吕派艺术', '重视唱腔、人物气质与传统程式的当代表达。'],
+  ['水', '水袖身段', '以细腻身段承载人物情绪与舞台节奏。'],
+  ['剧', '人物创造', '公开采访中多次谈及从现代观众感受出发塑造角色。'],
+  ['花', '传统新生', '关注越剧守正创新，让更多年轻观众走进剧场。']
+];
+
+const quizQuestions = [
+  { q: '李云霄主要工哪个行当？', options: ['花旦', '老生', '小生'], answer: 0, note: '她是越剧吕派花旦演员。' },
+  { q: '李云霄在《新龙门客栈》中饰演谁？', options: ['金镶玉', '贾廷', '周淮安'], answer: 0, note: '她饰演客栈老板娘金镶玉。' },
+  { q: '她主要师承哪一越剧流派？', options: ['吕派', '尹派', '范派'], answer: 0, note: '她师承吕派。' },
+  { q: '《钱塘里》属于哪类题材？', options: ['现实题材', '神话题材', '武侠题材'], answer: 0, note: '《钱塘里》是一部现实题材越剧。' },
+  { q: '青春越剧《九斤姑娘》在2026年首先于哪座城市首演？', options: ['杭州', '北京', '广州'], answer: 0, note: '2026年7月在杭州首演。' }
+];
+
+const fallbackDynamics = {
+  updatedAt: '2026-08-04T22:30:00+08:00',
+  version: '2026.08.04',
+  items: [
+    { date: '2026-08-02', title: '《九斤姑娘》宁波站演出完成', desc: '青春越剧《九斤姑娘》于宁波天然舞台演出，李云霄领衔饰演九斤姑娘。', source: '中国宁波网', url: 'https://news.cnnb.com.cn/system/2026/08/01/030799687.shtml', tag: '演出' },
+    { date: '2026-07-19', title: '青春越剧《九斤姑娘》杭州首演', desc: '该剧在杭州首演，以青春化表达重新呈现越剧早期经典。', source: '中国新闻网', url: 'https://www.chinanews.com.cn/cul/2026/07-19/10662317.shtml', tag: '首演' },
+    { date: '2026-01-18', title: '获评一级演员', desc: '公开报道显示，李云霄获一级演员任职资格。', source: '新华网', url: 'https://app.xinhuanet.com/news/article.html?articleId=ac5c447346b445835e45c0e6a409c4d0', tag: '荣誉' }
+  ]
+};
+
+function escapeHTML(value = '') {
+  return String(value).replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
+}
+
+function safeExternalUrl(url) {
+  try {
+    const parsed = new URL(url, location.href);
+    return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : '#';
+  } catch {
+    return '#';
+  }
+}
+
+function formatTime(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '时间待核验';
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+  }).format(date);
+}
+
+$('#works').innerHTML = works.map(w => `
+  <article class="work" tabindex="0">
+    <div class="art"></div>
+    <div class="work-copy"><h3>${escapeHTML(w[0])}</h3><p>${escapeHTML(w[1])}</p></div>
+  </article>`).join('');
+
+$('#interests').innerHTML = interests.map(x => `
+  <article class="interest"><span>${escapeHTML(x[0])}</span><h3>${escapeHTML(x[1])}</h3><p>${escapeHTML(x[2])}</p></article>`).join('');
+
+function renderFeed(payload, mode = 'local') {
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  $('#feed').innerHTML = items.map(x => `
+    <article class="feed-item">
+      <div class="feed-meta"><time>${escapeHTML(x.date)}</time><span>${escapeHTML(x.tag || '动态')}</span></div>
+      <h3>${escapeHTML(x.title)}</h3>
+      <p>${escapeHTML(x.desc)}</p>
+      <a target="_blank" rel="noopener noreferrer" href="${safeExternalUrl(x.url)}">${escapeHTML(x.source || '公开来源')} · 阅读原文 →</a>
+    </article>`).join('');
+
+  const prefix = mode === 'network' ? '已同步本站最新资料包' : '已载入本机核验资料包';
+  $('#feedStatus').innerHTML = `${prefix} · 更新至 <b>${escapeHTML(formatTime(payload.updatedAt))}</b>`;
+  $('#feedFreshness').textContent = `资料版本 ${payload.version || '本地版'}`;
+}
+
+async function loadDynamics({ announce = false } = {}) {
+  const btn = $('#refreshBtn');
+  btn.disabled = true;
+  btn.setAttribute('aria-busy', 'true');
+  $('#feedStatus').textContent = '正在检查本站最新资料包…';
+  try {
+    const response = await fetch(`./data/dynamics.json?v=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { Accept: 'application/json' }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!Array.isArray(data.items) || !data.items.length) throw new Error('数据格式不完整');
+    renderFeed(data, 'network');
+    localStorage.setItem('dynamicsCache', JSON.stringify(data));
+    if (announce) showToast('已完成同步');
+  } catch (error) {
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem('dynamicsCache') || 'null'); } catch {}
+    renderFeed(cached?.items?.length ? cached : fallbackDynamics, 'local');
+    if (announce) showToast('当前网络不可用，已显示本机核验资料');
+  } finally {
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+  }
+}
+
+$('#refreshBtn').addEventListener('click', () => loadDynamics({ announce: true }));
+renderFeed(fallbackDynamics, 'local');
+loadDynamics();
+
+$$('[data-go]').forEach(button => button.addEventListener('click', () => {
+  const key = button.dataset.go;
+  const target = key === 'top' ? document.body : key === 'works' ? $('#works') : key === 'fan' ? $('.fan-card') : $(`#${key}`);
+  target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}));
+
+$('#themeBtn').addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+});
+if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+
+$('#favBtn').addEventListener('click', () => {
+  const on = localStorage.getItem('fav') !== '1';
+  localStorage.setItem('fav', on ? '1' : '0');
+  $('#favBtn').textContent = on ? '♥ 已收藏' : '♡ 收藏';
+  showToast(on ? '已收藏到本机' : '已取消收藏');
+});
+if (localStorage.getItem('fav') === '1') $('#favBtn').textContent = '♥ 已收藏';
+
+const fortunes = ['水袖起落，心有清风。', '慢工守艺，自有回响。', '今日宜听一段越韵。', '台上一分钟，台下万千功。', '花开有时，热爱长青。'];
+$('#fortuneBtn').addEventListener('click', () => {
+  $('#fortune').textContent = fortunes[Math.floor(Math.random() * fortunes.length)];
+});
+
+let checkCount = Number(localStorage.getItem('check') || 0);
+$('#checkCount').textContent = `${checkCount} 次`;
+
+const modal = $('#modal');
+const modalCard = $('.modal-card');
+const modalBody = $('#modalBody');
+let lastFocused = null;
+
+function closeModal() {
+  modal.hidden = true;
+  document.documentElement.classList.remove('modal-open');
+  document.body.classList.remove('modal-open');
+  modalBody.innerHTML = '';
+  lastFocused?.focus?.();
+}
+
+function openModal() {
+  lastFocused = document.activeElement;
+  modal.hidden = false;
+  document.documentElement.classList.add('modal-open');
+  document.body.classList.add('modal-open');
+  requestAnimationFrame(() => $('#closeModal').focus());
+}
+
+$('#closeModal').addEventListener('click', closeModal);
+modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.hidden) closeModal(); });
+modalCard.addEventListener('click', event => event.stopPropagation());
+
+function renderQuiz(index = 0, score = 0, answered = false) {
+  const item = quizQuestions[index];
+  const progress = Math.round(((index + 1) / quizQuestions.length) * 100);
+  modalBody.innerHTML = `
+    <section class="quiz" aria-live="polite">
+      <div class="quiz-top"><span>第 ${index + 1} / ${quizQuestions.length} 题</span><span>得分 ${score}</span></div>
+      <div class="quiz-progress"><i style="width:${progress}%"></i></div>
+      <h2>云霄小考</h2>
+      <p class="quiz-question">${escapeHTML(item.q)}</p>
+      <div class="quiz-options">
+        ${item.options.map((option, optionIndex) => `<button class="quiz-option" data-option="${optionIndex}" ${answered ? 'disabled' : ''}>${escapeHTML(option)}</button>`).join('')}
+      </div>
+      <div id="quizFeedback" class="quiz-feedback" hidden></div>
+      <div class="quiz-actions">
+        <button class="secondary-action" id="quitQuiz">退出小考</button>
+        <button class="action" id="nextQuiz" hidden>${index === quizQuestions.length - 1 ? '查看成绩' : '下一题'}</button>
+      </div>
+    </section>`;
+
+  $('#quitQuiz').addEventListener('click', closeModal);
+  $$('.quiz-option', modalBody).forEach(button => button.addEventListener('click', () => {
+    const selected = Number(button.dataset.option);
+    const correct = selected === item.answer;
+    const nextScore = score + (correct ? 1 : 0);
+    $$('.quiz-option', modalBody).forEach((optionButton, optionIndex) => {
+      optionButton.disabled = true;
+      if (optionIndex === item.answer) optionButton.classList.add('correct');
+      if (optionIndex === selected && !correct) optionButton.classList.add('wrong');
+    });
+    const feedback = $('#quizFeedback');
+    feedback.hidden = false;
+    feedback.className = `quiz-feedback ${correct ? 'ok' : 'no'}`;
+    feedback.innerHTML = `<b>${correct ? '回答正确' : '回答不正确'}</b><span>${escapeHTML(item.note)}</span>`;
+    const next = $('#nextQuiz');
+    next.hidden = false;
+    next.addEventListener('click', () => {
+      if (index < quizQuestions.length - 1) renderQuiz(index + 1, nextScore);
+      else renderQuizResult(nextScore);
+    }, { once: true });
+  }));
+}
+
+function renderQuizResult(score) {
+  localStorage.setItem('quizBest', String(Math.max(score, Number(localStorage.getItem('quizBest') || 0))));
+  modalBody.innerHTML = `
+    <section class="quiz-result">
+      <div class="result-ring"><b>${score}</b><span>/ ${quizQuestions.length}</span></div>
+      <h2>小考完成</h2>
+      <p>${score === quizQuestions.length ? '满分！你对云霄舞台很熟悉。' : score >= 3 ? '表现不错，再读一读动态与作品会更熟悉。' : '继续探索作品与人物档案，下次会更好。'}</p>
+      <button class="action" id="retryQuiz">再答一次</button>
+      <button class="secondary-action full" id="finishQuiz">完成</button>
+    </section>`;
+  $('#retryQuiz').addEventListener('click', () => renderQuiz());
+  $('#finishQuiz').addEventListener('click', closeModal);
+}
+
+$$('[data-modal]').forEach(button => button.addEventListener('click', () => {
+  const type = button.dataset.modal;
+  if (type === 'checkin') {
+    checkCount += 1;
+    localStorage.setItem('check', String(checkCount));
+    $('#checkCount').textContent = `${checkCount} 次`;
+    modalBody.innerHTML = `<h2>签到成功</h2><p>这是你在本机的第 <b>${checkCount}</b> 次越韵签到。</p><button class="action" id="doneCheckin">完成</button>`;
+    openModal();
+    $('#doneCheckin').addEventListener('click', closeModal);
+    return;
+  }
+  if (type === 'note') {
+    modalBody.innerHTML = `<h2>写一封云笺</h2><textarea id="noteArea" maxlength="500" placeholder="写下你对舞台、角色或越剧的感受…">${escapeHTML(localStorage.getItem('note') || '')}</textarea><div class="form-actions"><button class="secondary-action" id="cancelNote">取消</button><button class="action" id="saveNote">保存到本机</button></div>`;
+    openModal();
+    $('#cancelNote').addEventListener('click', closeModal);
+    $('#saveNote').addEventListener('click', () => {
+      localStorage.setItem('note', $('#noteArea').value.trim());
+      showToast('云笺已保存到本机');
+      closeModal();
+    });
+    return;
+  }
+  if (type === 'quiz') {
+    renderQuiz();
+    openModal();
+    return;
+  }
+  if (type === 'share') {
+    modalBody.innerHTML = `<h2>分享卡</h2><div class="share-card"><small>云上小百花</small><h1>李云霄</h1><p>越韵新声 · 让传统被今天听见</p></div><p>可使用 iPhone 截图保存。此版本不调用境外图片或字体服务。</p><button class="action" id="closeShare">完成</button>`;
+    openModal();
+    $('#closeShare').addEventListener('click', closeModal);
+  }
+}));
+
+function showToast(message) {
+  const toast = $('#toast');
+  toast.textContent = message;
+  toast.hidden = false;
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => { toast.hidden = true; }, 2200);
+}
+
+window.addEventListener('error', () => showToast('页面遇到异常，请刷新后重试'));
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
