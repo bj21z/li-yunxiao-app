@@ -94,11 +94,11 @@ async function loadDynamics({ announce = false } = {}) {
     const data = await response.json();
     if (!Array.isArray(data.items) || !data.items.length) throw new Error('数据格式不完整');
     renderFeed(data, 'network');
-    localStorage.setItem('dynamicsCache', JSON.stringify(data));
+    localStorage.setItem('liyunxiao:dynamicsCache', JSON.stringify(data));
     if (announce) showToast('已完成同步');
   } catch (error) {
     let cached = null;
-    try { cached = JSON.parse(localStorage.getItem('dynamicsCache') || 'null'); } catch {}
+    try { cached = JSON.parse(localStorage.getItem('liyunxiao:dynamicsCache') || 'null'); } catch {}
     renderFeed(cached?.items?.length ? cached : fallbackDynamics, 'local');
     if (announce) showToast('当前网络不可用，已显示本机核验资料');
   } finally {
@@ -119,24 +119,24 @@ $$('[data-go]').forEach(button => button.addEventListener('click', () => {
 
 $('#themeBtn').addEventListener('click', () => {
   document.body.classList.toggle('dark');
-  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  localStorage.setItem('liyunxiao:theme', document.body.classList.contains('dark') ? 'dark' : 'light');
 });
-if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
+if (localStorage.getItem('liyunxiao:theme') === 'dark') document.body.classList.add('dark');
 
 $('#favBtn').addEventListener('click', () => {
-  const on = localStorage.getItem('fav') !== '1';
-  localStorage.setItem('fav', on ? '1' : '0');
+  const on = localStorage.getItem('liyunxiao:fav') !== '1';
+  localStorage.setItem('liyunxiao:fav', on ? '1' : '0');
   $('#favBtn').textContent = on ? '♥ 已收藏' : '♡ 收藏';
   showToast(on ? '已收藏到本机' : '已取消收藏');
 });
-if (localStorage.getItem('fav') === '1') $('#favBtn').textContent = '♥ 已收藏';
+if (localStorage.getItem('liyunxiao:fav') === '1') $('#favBtn').textContent = '♥ 已收藏';
 
 const fortunes = ['水袖起落，心有清风。', '慢工守艺，自有回响。', '今日宜听一段越韵。', '台上一分钟，台下万千功。', '花开有时，热爱长青。'];
 $('#fortuneBtn').addEventListener('click', () => {
   $('#fortune').textContent = fortunes[Math.floor(Math.random() * fortunes.length)];
 });
 
-let checkCount = Number(localStorage.getItem('check') || 0);
+let checkCount = Number(localStorage.getItem('liyunxiao:check') || 0);
 $('#checkCount').textContent = `${checkCount} 次`;
 
 const modal = $('#modal');
@@ -208,7 +208,7 @@ function renderQuiz(index = 0, score = 0, answered = false) {
 }
 
 function renderQuizResult(score) {
-  localStorage.setItem('quizBest', String(Math.max(score, Number(localStorage.getItem('quizBest') || 0))));
+  localStorage.setItem('liyunxiao:quizBest', String(Math.max(score, Number(localStorage.getItem('liyunxiao:quizBest') || 0))));
   modalBody.innerHTML = `
     <section class="quiz-result">
       <div class="result-ring"><b>${score}</b><span>/ ${quizQuestions.length}</span></div>
@@ -225,19 +225,19 @@ $$('[data-modal]').forEach(button => button.addEventListener('click', () => {
   const type = button.dataset.modal;
   if (type === 'checkin') {
     checkCount += 1;
-    localStorage.setItem('check', String(checkCount));
+    localStorage.setItem('liyunxiao:check', String(checkCount));
     $('#checkCount').textContent = `${checkCount} 次`;
     modalBody.innerHTML = `<h2>签到成功</h2><p>这是你在本机的第 <b>${checkCount}</b> 次越韵签到。</p><button class="action" id="doneCheckin">完成</button>`;
     openModal();
     $('#doneCheckin').addEventListener('click', closeModal);
     return;
   }
-  if (type === 'note') {
-    modalBody.innerHTML = `<h2>写一封云笺</h2><textarea id="noteArea" maxlength="500" placeholder="写下你对舞台、角色或越剧的感受…">${escapeHTML(localStorage.getItem('note') || '')}</textarea><div class="form-actions"><button class="secondary-action" id="cancelNote">取消</button><button class="action" id="saveNote">保存到本机</button></div>`;
+  if (type === 'liyunxiao:note') {
+    modalBody.innerHTML = `<h2>写一封云笺</h2><textarea id="noteArea" maxlength="500" placeholder="写下你对舞台、角色或越剧的感受…">${escapeHTML(localStorage.getItem('liyunxiao:note') || '')}</textarea><div class="form-actions"><button class="secondary-action" id="cancelNote">取消</button><button class="action" id="saveNote">保存到本机</button></div>`;
     openModal();
     $('#cancelNote').addEventListener('click', closeModal);
     $('#saveNote').addEventListener('click', () => {
-      localStorage.setItem('note', $('#noteArea').value.trim());
+      localStorage.setItem('liyunxiao:note', $('#noteArea').value.trim());
       showToast('云笺已保存到本机');
       closeModal();
     });
@@ -384,8 +384,8 @@ function renderIntel(){
  $$('[data-intel-filter]', $('#intelFilters')).forEach(b=>b.addEventListener('click',()=>{intelFilter=b.dataset.intelFilter;renderIntel();}));
  const q=intelQuery.trim().toLowerCase();
  const visible=items.filter(x=>(intelFilter==='全部'||(x.category||'其他')===intelFilter)&&(!q||`${x.title} ${x.desc} ${x.source}`.toLowerCase().includes(q)));
- $('#intelList').innerHTML=visible.map((x,i)=>`<article class="intel-card"><div class="intel-rank">${String(i+1).padStart(2,'0')}</div><div class="intel-body"><div class="intel-meta"><time>${escapeHTML(x.date||'时间待核验')}</time><span class="tier tier-${escapeHTML((x.tier||'B').toLowerCase())}">${x.tier==='A'?'权威/一手':'公开线索'}</span><i>${escapeHTML(x.category||'动态')}</i></div><h3>${escapeHTML(x.title)}</h3><p>${escapeHTML(x.desc||'')}</p><div class="intel-actions"><a href="${safeExternalUrl(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(x.source||'公开来源')} · 阅读原文 →</a><button type="button" data-intel-save="${i}">${localStorage.getItem('intel-save-'+x.title)==='1'?'♥ 已收藏':'♡ 收藏'}</button></div></div></article>`).join('')||'<div class="empty-state">没有符合当前条件的线索。</div>';
- $$('[data-intel-save]', $('#intelList')).forEach(b=>b.addEventListener('click',()=>{const x=visible[Number(b.dataset.intelSave)];if(!x)return;const k='intel-save-'+x.title,on=localStorage.getItem(k)!=='1';localStorage.setItem(k,on?'1':'0');b.textContent=on?'♥ 已收藏':'♡ 收藏';showToast(on?'已收藏该线索':'已取消收藏');}));
+ $('#intelList').innerHTML=visible.map((x,i)=>`<article class="intel-card"><div class="intel-rank">${String(i+1).padStart(2,'0')}</div><div class="intel-body"><div class="intel-meta"><time>${escapeHTML(x.date||'时间待核验')}</time><span class="tier tier-${escapeHTML((x.tier||'B').toLowerCase())}">${x.tier==='A'?'权威/一手':'公开线索'}</span><i>${escapeHTML(x.category||'动态')}</i></div><h3>${escapeHTML(x.title)}</h3><p>${escapeHTML(x.desc||'')}</p><div class="intel-actions"><a href="${safeExternalUrl(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(x.source||'公开来源')} · 阅读原文 →</a><button type="button" data-intel-save="${i}">${localStorage.getItem('liyunxiao:intel-save-'+x.title)==='1'?'♥ 已收藏':'♡ 收藏'}</button></div></div></article>`).join('')||'<div class="empty-state">没有符合当前条件的线索。</div>';
+ $$('[data-intel-save]', $('#intelList')).forEach(b=>b.addEventListener('click',()=>{const x=visible[Number(b.dataset.intelSave)];if(!x)return;const k='liyunxiao:intel-save-'+x.title,on=localStorage.getItem(k)!=='1';localStorage.setItem(k,on?'1':'0');b.textContent=on?'♥ 已收藏':'♡ 收藏';showToast(on?'已收藏该线索':'已取消收藏');}));
  $('#intelCount').textContent=items.length;$('#intelSources').textContent=new Set(items.map(x=>x.source).filter(Boolean)).size;$('#intelNew').textContent=intelFreshCount(items);$('#intelChecked').textContent=intelPayload.checkedAt?new Date(intelPayload.checkedAt).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}):'--';buildDailyBrief(items);renderSourceHealth();
  $('#sourceRadar').innerHTML=intelSources.map(x=>`<a href="${x[2]}" target="_blank" rel="noopener noreferrer"><b>${x[0]}</b><span>${x[1]}</span><em>打开 ↗</em></a>`).join('');
 }
@@ -394,9 +394,9 @@ async function loadIntel(announce=false){
  let data=null,mode='';
  try{const r=await fetch(`./api/news?v=${Date.now()}`,{cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw new Error();const d=await r.json();if(!d.items?.length)throw new Error();data=d;mode='实时聚合';}catch{}
  if(!data){try{const r=await fetch(`./data/daily.json?v=${Date.now()}`,{cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw new Error();const d=await r.json();if(!d.items?.length)throw new Error();data=d;mode='每日资料包';}catch{}}
- if(!data){try{const d=JSON.parse(localStorage.getItem('intel-cache')||'null');if(d?.items?.length){data=d;mode='本机缓存';}}catch{}}
+ if(!data){try{const d=JSON.parse(localStorage.getItem('liyunxiao:intel-cache')||'null');if(d?.items?.length){data=d;mode='本机缓存';}}catch{}}
  if(!data){data=intelFallback;mode='基础资料';}
- intelPayload=data;localStorage.setItem('intel-cache',JSON.stringify(data));renderIntel();$('#intelStatus').innerHTML=`已载入 <b>${escapeHTML(mode)}</b> · 最近检查 ${escapeHTML(formatTime(data.checkedAt||data.updatedAt))}`;btn.disabled=false;if(announce)showToast(`情报站已刷新：${mode}`);
+ intelPayload=data;localStorage.setItem('liyunxiao:intel-cache',JSON.stringify(data));renderIntel();$('#intelStatus').innerHTML=`已载入 <b>${escapeHTML(mode)}</b> · 最近检查 ${escapeHTML(formatTime(data.checkedAt||data.updatedAt))}`;btn.disabled=false;if(announce)showToast(`情报站已刷新：${mode}`);
 }
 $('#intelRefreshBtn')?.addEventListener('click',()=>loadIntel(true));
 $('#diagnoseBtn')?.addEventListener('click',async()=>{showToast('正在运行五层信息源诊断…');await loadIntel(false);renderSourceHealth();showToast('信息源诊断完成');});
