@@ -347,7 +347,7 @@ document.querySelector('#socialRefreshBtn')?.addEventListener('click', () => loa
 renderSocialHub(); loadSocialHub(false);
 
 // ===== 每日云霄情报站 1.4.0 =====
-const intelFallback={updatedAt:'2026-08-06T03:00:00+08:00',checkedAt:'2026-08-06T03:00:00+08:00',version:'2026.08.06',items:[]};
+const intelFallback={updatedAt:'2026-08-06T03:00:00+08:00',checkedAt:'2026-08-06T03:00:00+08:00',version:'2.0.0',checks:[],items:[]};
 const intelSources=[
  ['浙江小百花','院团与演出','https://www.baidu.com/s?wd='+encodeURIComponent('浙江小百花越剧院 李云霄')],
  ['新华网','权威新闻','https://www.baidu.com/s?wd='+encodeURIComponent('site:news.cn 李云霄')],
@@ -361,6 +361,22 @@ const intelSources=[
 let intelPayload=intelFallback,intelFilter='全部',intelQuery='';
 function intelDateValue(x){const t=new Date(x.date||0).getTime();return Number.isFinite(t)?t:0;}
 function intelFreshCount(items){const now=Date.now();return items.filter(x=>now-intelDateValue(x)<=7*86400000&&now>=intelDateValue(x)).length;}
+const intelLayers=['官方与本人','权威媒体','演出与节目','视频平台','戏迷社区'];
+function buildDailyBrief(items){
+ const sorted=[...items].sort((a,b)=>intelDateValue(b)-intelDateValue(a));
+ const fresh=sorted.filter(x=>Date.now()-intelDateValue(x)<=7*86400000&&Date.now()>=intelDateValue(x));
+ const sourceCount=new Set(sorted.map(x=>x.source).filter(Boolean)).size;
+ const cats=[...new Set(fresh.map(x=>x.category).filter(Boolean))];
+ const top=fresh.slice(0,3);
+ $('#briefDate').textContent=new Date(intelPayload.checkedAt||Date.now()).toLocaleDateString('zh-CN',{month:'long',day:'numeric'});
+ $('#briefLead').textContent=fresh.length?`近7日发现 ${fresh.length} 条新增公开线索，覆盖 ${sourceCount} 个来源。${cats.length?`重点集中在${cats.slice(0,3).join('、')}。`:''}`:`今日已完成巡检，暂未发现近7日新增公开事件；系统将继续保留既有重要资料并进行下一轮检查。`;
+ $('#briefHighlights').innerHTML=top.map((x,i)=>`<article><span>0${i+1}</span><div><b>${escapeHTML(x.title)}</b><em>${escapeHTML(x.source||'公开来源')} · ${escapeHTML(x.date||'时间待核验')}</em></div></article>`).join('')||'<div class="empty-state">暂无新的重点条目。</div>';
+ $('#briefWatch').textContent=top[0]?.title||'关注官方演出公告、采访与节目更新';
+}
+function renderSourceHealth(){
+ const checks=Array.isArray(intelPayload.checks)?intelPayload.checks:[];
+ $('#sourceHealthGrid').innerHTML=intelLayers.map(layer=>{const rows=checks.filter(x=>x.layer===layer);const ok=rows.some(x=>x.ok);const count=rows.reduce((n,x)=>n+(x.count||0),0);return `<div class="source-health-card ${ok?'ok':'idle'}"><i></i><div><b>${layer}</b><span>${rows.length?(ok?`已连接 · ${count} 条线索`:'本轮未连接'):'等待实时接口诊断'}</span></div></div>`}).join('');
+}
 function renderIntel(){
  const items=Array.isArray(intelPayload.items)?intelPayload.items:[];
  const cats=['全部',...new Set(items.map(x=>x.category||'其他'))];
@@ -370,7 +386,7 @@ function renderIntel(){
  const visible=items.filter(x=>(intelFilter==='全部'||(x.category||'其他')===intelFilter)&&(!q||`${x.title} ${x.desc} ${x.source}`.toLowerCase().includes(q)));
  $('#intelList').innerHTML=visible.map((x,i)=>`<article class="intel-card"><div class="intel-rank">${String(i+1).padStart(2,'0')}</div><div class="intel-body"><div class="intel-meta"><time>${escapeHTML(x.date||'时间待核验')}</time><span class="tier tier-${escapeHTML((x.tier||'B').toLowerCase())}">${x.tier==='A'?'权威/一手':'公开线索'}</span><i>${escapeHTML(x.category||'动态')}</i></div><h3>${escapeHTML(x.title)}</h3><p>${escapeHTML(x.desc||'')}</p><div class="intel-actions"><a href="${safeExternalUrl(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(x.source||'公开来源')} · 阅读原文 →</a><button type="button" data-intel-save="${i}">${localStorage.getItem('intel-save-'+x.title)==='1'?'♥ 已收藏':'♡ 收藏'}</button></div></div></article>`).join('')||'<div class="empty-state">没有符合当前条件的线索。</div>';
  $$('[data-intel-save]', $('#intelList')).forEach(b=>b.addEventListener('click',()=>{const x=visible[Number(b.dataset.intelSave)];if(!x)return;const k='intel-save-'+x.title,on=localStorage.getItem(k)!=='1';localStorage.setItem(k,on?'1':'0');b.textContent=on?'♥ 已收藏':'♡ 收藏';showToast(on?'已收藏该线索':'已取消收藏');}));
- $('#intelCount').textContent=items.length;$('#intelSources').textContent=new Set(items.map(x=>x.source).filter(Boolean)).size;$('#intelNew').textContent=intelFreshCount(items);$('#intelChecked').textContent=intelPayload.checkedAt?new Date(intelPayload.checkedAt).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}):'--';
+ $('#intelCount').textContent=items.length;$('#intelSources').textContent=new Set(items.map(x=>x.source).filter(Boolean)).size;$('#intelNew').textContent=intelFreshCount(items);$('#intelChecked').textContent=intelPayload.checkedAt?new Date(intelPayload.checkedAt).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}):'--';buildDailyBrief(items);renderSourceHealth();
  $('#sourceRadar').innerHTML=intelSources.map(x=>`<a href="${x[2]}" target="_blank" rel="noopener noreferrer"><b>${x[0]}</b><span>${x[1]}</span><em>打开 ↗</em></a>`).join('');
 }
 async function loadIntel(announce=false){
@@ -383,5 +399,6 @@ async function loadIntel(announce=false){
  intelPayload=data;localStorage.setItem('intel-cache',JSON.stringify(data));renderIntel();$('#intelStatus').innerHTML=`已载入 <b>${escapeHTML(mode)}</b> · 最近检查 ${escapeHTML(formatTime(data.checkedAt||data.updatedAt))}`;btn.disabled=false;if(announce)showToast(`情报站已刷新：${mode}`);
 }
 $('#intelRefreshBtn')?.addEventListener('click',()=>loadIntel(true));
+$('#diagnoseBtn')?.addEventListener('click',async()=>{showToast('正在运行五层信息源诊断…');await loadIntel(false);renderSourceHealth();showToast('信息源诊断完成');});
 $('#intelSearch')?.addEventListener('input',e=>{intelQuery=e.target.value;renderIntel();});
 renderIntel();loadIntel(false);

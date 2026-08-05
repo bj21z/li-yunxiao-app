@@ -1,13 +1,16 @@
-# 云上小百花 · 李云霄艺术档案 V1.4.0
+# 云上小百花 · 李云霄艺术档案 V2.0.0
 
-## 版本定位
-中国大陆网络环境优先的非官方越剧艺术档案。V1.4.0 新增“每日云霄情报站”，采用三层资讯机制：Cloudflare Pages Function 实时聚合、GitHub Actions 每日生成资料包、本机缓存/内置资料回退。
+## 核心升级
+V2.0 将“每日情报站”升级为五层全域资讯引擎：官方与本人、权威媒体、演出与节目、视频平台、戏迷社区。每日北京时间约 06:15 与 18:15 自动巡检，生成同源 `data/daily.json`，前端自动形成“今日云霄日报”。
 
 ## 部署
-将本目录全部文件上传到 GitHub，并连接 Cloudflare Pages。Cloudflare Pages 会自动识别 `functions/api/news.js`，同源接口为 `/api/news`。若仅使用普通静态托管，实时接口不可用，但 `data/daily.json`、GitHub Actions 和缓存回退仍可工作。
+建议使用 GitHub 仓库连接 Cloudflare Pages。必须完整上传 `.github`、`functions`、`scripts`、`data` 等目录。GitHub Actions 需在 Settings → Actions → General 中启用 Read and write permissions。
 
-## 每日自动更新
-`.github/workflows/daily-news.yml` 每天北京时间约 06:15 运行，执行 `scripts/update-news.mjs`，更新 `data/daily.json` 并提交。仓库需允许 GitHub Actions 具有写权限；Cloudflare Pages 连接仓库后会自动重新部署。
+## 更新保障
+1. Cloudflare 同源 `/api/news` 实时聚合；
+2. GitHub Actions 每日两次更新资料包；
+3. 浏览器本机缓存；
+4. 程序内置基础资料。
 
-## 重要边界
-“每天更新”指每天执行信息巡检，不代表演员每天必然产生新事件。聚合线索须结合原文来源判断；程序不绕过平台登录、反爬或版权限制，也不采集私人账号评论。
+## 边界
+系统保证每日巡检，不保证演员每天一定产生新事件。平台讨论仅作为公开线索，重要信息应打开原文核验。正式商业化前应取得肖像、剧照与相关内容授权。

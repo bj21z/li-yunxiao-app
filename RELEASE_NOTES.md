@@ -1,46 +1,31 @@
-# V1.4.0 每日云霄情报站版发布说明
+# V2.0.0 全域资讯中心版发布说明
 
-## 升级重点
-- 新增“每日云霄情报站”：分类筛选、关键词搜索、来源等级、近7日统计、收藏及信息源雷达。
-- 新增 Cloudflare Pages 同源实时聚合接口，使用多组关键词抓取公开新闻 RSS 并去重。
-- 新增 GitHub Actions 每日自动巡检和更新资料包。
-- 建立“实时接口 → 每日资料包 → 本机缓存 → 基础资料”四级回退。
-- 明确区分权威/一手来源与公开线索，避免把未核实内容写成事实。
+## 版本基线
+上一版本：V1.4.0 每日情报站版  
+当前版本：V2.0.0 五层全域资讯中心版  
+部署要求：必须全量替换。
 
 ## 修改文件
-- `index.html`：新增每日情报站、日报底部导航，资源版本升级为1.4.0。
-- `app.js`：新增聚合读取、筛选、搜索、统计、收藏、来源雷达与四级回退。
-- `styles.css`：新增情报站完整视觉、移动端与深色模式样式。
-- `sw.js`：缓存升级并纳入每日资料包，JSON采用网络优先。
-- `manifest.webmanifest`：同步版本信息。
-- `README.md`：新增部署、自动更新与边界说明。
-- `RELEASE_NOTES.md`：本发布记录。
+- `index.html`：情报站升级为全域资讯中心；新增今日云霄日报与五层信息源状态。
+- `app.js`：新增日报自动摘要、重点条目、来源健康诊断和五层状态展示。
+- `styles.css`：新增日报编辑台、来源状态卡及移动端样式。
+- `functions/api/news.js`：重写为五层、多关键词、分级、去重、质量排序的同源聚合接口。
+- `scripts/update-news.mjs`：重写自动巡检脚本，输出来源层级与诊断记录。
+- `.github/workflows/daily-news.yml`：由每天一次升级为每天两次，加入并发控制与超时保护。
+- `manifest.webmanifest`、`sw.js`：升级应用与缓存版本。
+- `README.md`：重写部署、更新保障与边界说明。
 
 ## 新增文件
-- `data/daily.json`：每日核验/聚合资料包。
-- `functions/api/news.js`：Cloudflare Pages实时同源聚合接口。
-- `scripts/update-news.mjs`：无密钥新闻更新脚本。
-- `.github/workflows/daily-news.yml`：每日定时自动更新工作流。
+- `data/source-registry.json`：五层信息源登记表。
 
 ## 删除文件
 无。
 
-## 上传方式
-必须全量替换。仅替换 `index.html` 无法启用实时接口、自动更新及新缓存机制。
+## 保持不变
+人物介绍、代表作品、20张在线影像、云端戏迷场、动态、小考、签到、云笺、分享、收藏、暗色模式、PWA与离线回退全部保留。
 
 ## 测试
-- HTML关键节点与资源版本：通过
-- JavaScript语法：通过
-- JSON格式：通过
-- Cloudflare Function模块语法：通过
-- GitHub Actions YAML结构：通过
-- ZIP完整性：通过
-
-## 已知限制
-- Cloudflare Pages Function 仅在Cloudflare Pages部署时生效。
-- GitHub Actions需开启仓库工作流写权限。
-- 新闻源可能调整RSS、防爬或文章链接；系统会自动回退，但无法承诺第三方源永久可用。
-- 每天自动检查不等于每天一定有真实新动态。
+完成 JavaScript 语法、JSON 格式、ZIP 完整性、页面关键节点、Service Worker 缓存清单和自动工作流结构检查。
 
 ## 回滚
-保留V1.3.0完整包；出现问题时删除新版文件并全量上传V1.3.0，再清除站点缓存或更新Service Worker。
+保留 V1.4.0 压缩包。出现部署异常时，删除线上 V2.0 文件并重新上传 V1.4.0 全量文件。
