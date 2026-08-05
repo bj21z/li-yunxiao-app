@@ -1,14 +1,5 @@
-const CACHE='yunshang-xiaobaihua-1.2.0';
-const ASSETS=['./','./index.html','./styles.css?v=1.1.0','./app.js?v=1.1.0','./manifest.webmanifest','./assets/icon.svg','./assets/images/longmen.jpg','./data/dynamics.json'];
+const CACHE='云上小百花-1.3.0';
+const ASSETS=['./','./index.html','./styles.css?v=1.3.0','./app.js?v=1.3.0','./manifest.webmanifest','./assets/icon.svg','./data/dynamics.json','./data/social.json'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',event=>{
-  const request=event.request;
-  if(request.method!=='GET')return;
-  const url=new URL(request.url);
-  if(url.pathname.endsWith('/data/dynamics.json')){
-    event.respondWith(fetch(request).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put('./data/dynamics.json',copy));return response}).catch(()=>caches.match('./data/dynamics.json')));
-    return;
-  }
-  event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok&&url.origin===location.origin){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy))}return response}).catch(()=>caches.match('./index.html'))));
-});
+self.addEventListener('fetch',event=>{const request=event.request;if(request.method!=='GET')return;const url=new URL(request.url);if(url.origin!==location.origin)return;if(url.pathname.endsWith('.json')){event.respondWith(fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy))}return response}).catch(()=>caches.match(request)));return}event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy))}return response}).catch(()=>caches.match('./index.html'))))});
