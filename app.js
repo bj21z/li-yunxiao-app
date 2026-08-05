@@ -345,3 +345,43 @@ async function loadSocialHub(announce = false) {
 }
 document.querySelector('#socialRefreshBtn')?.addEventListener('click', () => loadSocialHub(true));
 renderSocialHub(); loadSocialHub(false);
+
+// ===== 每日云霄情报站 1.4.0 =====
+const intelFallback={updatedAt:'2026-08-06T03:00:00+08:00',checkedAt:'2026-08-06T03:00:00+08:00',version:'2026.08.06',items:[]};
+const intelSources=[
+ ['浙江小百花','院团与演出','https://www.baidu.com/s?wd='+encodeURIComponent('浙江小百花越剧院 李云霄')],
+ ['新华网','权威新闻','https://www.baidu.com/s?wd='+encodeURIComponent('site:news.cn 李云霄')],
+ ['中国新闻网','文化资讯','https://www.baidu.com/s?wd='+encodeURIComponent('site:chinanews.com.cn 李云霄')],
+ ['潮新闻','浙江本地','https://www.baidu.com/s?wd='+encodeURIComponent('site:tidenews.com.cn 李云霄')],
+ ['新浪微博','本人/话题','https://s.weibo.com/weibo?q='+encodeURIComponent('李云霄')],
+ ['抖音','短视频动态','https://www.douyin.com/search/'+encodeURIComponent('李云霄')],
+ ['哔哩哔哩','舞台视频','https://search.bilibili.com/all?keyword='+encodeURIComponent('李云霄')],
+ ['百度','全网聚合','https://www.baidu.com/s?wd='+encodeURIComponent('李云霄 最新')]
+];
+let intelPayload=intelFallback,intelFilter='全部',intelQuery='';
+function intelDateValue(x){const t=new Date(x.date||0).getTime();return Number.isFinite(t)?t:0;}
+function intelFreshCount(items){const now=Date.now();return items.filter(x=>now-intelDateValue(x)<=7*86400000&&now>=intelDateValue(x)).length;}
+function renderIntel(){
+ const items=Array.isArray(intelPayload.items)?intelPayload.items:[];
+ const cats=['全部',...new Set(items.map(x=>x.category||'其他'))];
+ $('#intelFilters').innerHTML=cats.map(c=>`<button type="button" class="${c===intelFilter?'active':''}" data-intel-filter="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('');
+ $$('[data-intel-filter]', $('#intelFilters')).forEach(b=>b.addEventListener('click',()=>{intelFilter=b.dataset.intelFilter;renderIntel();}));
+ const q=intelQuery.trim().toLowerCase();
+ const visible=items.filter(x=>(intelFilter==='全部'||(x.category||'其他')===intelFilter)&&(!q||`${x.title} ${x.desc} ${x.source}`.toLowerCase().includes(q)));
+ $('#intelList').innerHTML=visible.map((x,i)=>`<article class="intel-card"><div class="intel-rank">${String(i+1).padStart(2,'0')}</div><div class="intel-body"><div class="intel-meta"><time>${escapeHTML(x.date||'时间待核验')}</time><span class="tier tier-${escapeHTML((x.tier||'B').toLowerCase())}">${x.tier==='A'?'权威/一手':'公开线索'}</span><i>${escapeHTML(x.category||'动态')}</i></div><h3>${escapeHTML(x.title)}</h3><p>${escapeHTML(x.desc||'')}</p><div class="intel-actions"><a href="${safeExternalUrl(x.url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(x.source||'公开来源')} · 阅读原文 →</a><button type="button" data-intel-save="${i}">${localStorage.getItem('intel-save-'+x.title)==='1'?'♥ 已收藏':'♡ 收藏'}</button></div></div></article>`).join('')||'<div class="empty-state">没有符合当前条件的线索。</div>';
+ $$('[data-intel-save]', $('#intelList')).forEach(b=>b.addEventListener('click',()=>{const x=visible[Number(b.dataset.intelSave)];if(!x)return;const k='intel-save-'+x.title,on=localStorage.getItem(k)!=='1';localStorage.setItem(k,on?'1':'0');b.textContent=on?'♥ 已收藏':'♡ 收藏';showToast(on?'已收藏该线索':'已取消收藏');}));
+ $('#intelCount').textContent=items.length;$('#intelSources').textContent=new Set(items.map(x=>x.source).filter(Boolean)).size;$('#intelNew').textContent=intelFreshCount(items);$('#intelChecked').textContent=intelPayload.checkedAt?new Date(intelPayload.checkedAt).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}):'--';
+ $('#sourceRadar').innerHTML=intelSources.map(x=>`<a href="${x[2]}" target="_blank" rel="noopener noreferrer"><b>${x[0]}</b><span>${x[1]}</span><em>打开 ↗</em></a>`).join('');
+}
+async function loadIntel(announce=false){
+ const btn=$('#intelRefreshBtn');btn.disabled=true;$('#intelStatus').textContent='正在从同源实时接口、每日资料包和本机缓存依次检查…';
+ let data=null,mode='';
+ try{const r=await fetch(`./api/news?v=${Date.now()}`,{cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw new Error();const d=await r.json();if(!d.items?.length)throw new Error();data=d;mode='实时聚合';}catch{}
+ if(!data){try{const r=await fetch(`./data/daily.json?v=${Date.now()}`,{cache:'no-store',headers:{Accept:'application/json'}});if(!r.ok)throw new Error();const d=await r.json();if(!d.items?.length)throw new Error();data=d;mode='每日资料包';}catch{}}
+ if(!data){try{const d=JSON.parse(localStorage.getItem('intel-cache')||'null');if(d?.items?.length){data=d;mode='本机缓存';}}catch{}}
+ if(!data){data=intelFallback;mode='基础资料';}
+ intelPayload=data;localStorage.setItem('intel-cache',JSON.stringify(data));renderIntel();$('#intelStatus').innerHTML=`已载入 <b>${escapeHTML(mode)}</b> · 最近检查 ${escapeHTML(formatTime(data.checkedAt||data.updatedAt))}`;btn.disabled=false;if(announce)showToast(`情报站已刷新：${mode}`);
+}
+$('#intelRefreshBtn')?.addEventListener('click',()=>loadIntel(true));
+$('#intelSearch')?.addEventListener('input',e=>{intelQuery=e.target.value;renderIntel();});
+renderIntel();loadIntel(false);
